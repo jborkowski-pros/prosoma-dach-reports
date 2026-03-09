@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firebase first_open vs Google Play Downloads — Selective Optimization Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --blue-900: #1e3a5f;
+    --blue-700: #2563eb;
+    --blue-600: #3b82f6;
+    --blue-500: #60a5fa;
+    --blue-100: #dbeafe;
+    --blue-50: #eff6ff;
+    --orange-600: #ea580c;
+    --orange-500: #f97316;
+    --orange-100: #ffedd5;
+    --orange-50: #fff7ed;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-600: #4b5563;
+    --gray-500: #6b7280;
+    --gray-400: #9ca3af;
+    --gray-300: #d1d5db;
+    --gray-200: #e5e7eb;
+    --gray-100: #f3f4f6;
+    --gray-50: #f9fafb;
+    --green-600: #16a34a;
+    --green-100: #dcfce7;
+    --red-600: #dc2626;
+    --red-100: #fee2e2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--gray-900);
+    background: #fff;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* Header */
+  .report-header {
+    background: linear-gradient(135deg, var(--blue-900) 0%, #2d4a7a 100%);
+    color: #fff;
+    padding: 48px 0 40px;
+    margin-bottom: 40px;
+  }
+  .report-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+  .report-header .subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-bottom: 16px;
+  }
+  .report-header .meta-info {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    opacity: 0.7;
+    align-items: center;
+  }
+  .confidential-badge {
+    background: #dc2626;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 4px 14px;
+    border-radius: 4px;
+    opacity: 1 !important;
+  }
+
+  /* Table of Contents */
+  .toc {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 24px 32px;
+    margin-bottom: 40px;
+  }
+  .toc h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  .toc ol {
+    columns: 2;
+    column-gap: 40px;
+    padding-left: 20px;
+  }
+  .toc li {
+    font-size: 14px;
+    margin-bottom: 6px;
+    break-inside: avoid;
+  }
+  .toc a {
+    color: var(--blue-700);
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Sections */
+  .section {
+    margin-bottom: 48px;
+    page-break-inside: avoid;
+  }
+  .section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--blue-900);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--blue-100);
+  }
+  .section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin: 20px 0 10px;
+  }
+  .section p {
+    margin-bottom: 12px;
+    color: var(--gray-700);
+  }
+
+  /* Tables */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  thead th {
+    background: var(--blue-900);
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody tr:hover { background: var(--blue-50); }
+  tbody tr.transition-row {
+    background: var(--gray-200) !important;
+    font-style: italic;
+  }
+  tbody tr.transition-row td { color: var(--gray-600); }
+
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .text-center { text-align: center; }
+
+  /* Phase badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .badge-gp {
+    background: var(--blue-100);
+    color: var(--blue-700);
+  }
+  .badge-fb {
+    background: var(--orange-100);
+    color: var(--orange-600);
+  }
+  .badge-transition {
+    background: var(--gray-200);
+    color: var(--gray-600);
+  }
+  .badge-primary {
+    background: var(--green-100);
+    color: var(--green-600);
+  }
+  .badge-secondary {
+    background: var(--gray-100);
+    color: var(--gray-500);
+  }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .kpi-card {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .kpi-card .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .kpi-card .kpi-sub {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  /* Comparison grid */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  .comparison-box {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .comparison-box.firebase-box {
+    border-top: 3px solid var(--orange-500);
+  }
+  .comparison-box.gp-box {
+    border-top: 3px solid var(--blue-600);
+  }
+  .comparison-box h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .comparison-box .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .comparison-box .stat-row:last-child { border-bottom: none; }
+  .comparison-box .stat-label { color: var(--gray-600); }
+  .comparison-box .stat-value { font-weight: 600; }
+
+  /* Caveat box */
+  .caveat-box {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .caveat-box strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #92400e;
+  }
+
+  .info-box {
+    background: var(--blue-50);
+    border: 1px solid var(--blue-500);
+    border-left: 4px solid var(--blue-600);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .info-box strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--blue-900);
+  }
+
+  /* Chart containers */
+  .chart-container {
+    position: relative;
+    margin: 24px 0;
+    padding: 16px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .chart-container canvas {
+    max-height: 400px;
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    margin: 24px 0;
+  }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+  .timeline-header {
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    padding: 8px 12px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+  }
+  .timeline-cell {
+    padding: 12px 16px;
+    border: 1px solid var(--gray-200);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .timeline-month {
+    font-weight: 600;
+    color: var(--gray-700);
+  }
+  .tl-gp { background: var(--blue-50); }
+  .tl-fb { background: var(--orange-50); }
+  .tl-transition { background: var(--gray-100); }
+
+  /* Bullet list styling */
+  .findings-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+  }
+  .findings-list li {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: var(--gray-50);
+    border-left: 3px solid var(--blue-600);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--gray-700);
+  }
+  .findings-list li strong { color: var(--gray-900); }
+
+  /* Confounders */
+  .confounder-list {
+    counter-reset: conf;
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+  }
+  .confounder-list li {
+    counter-increment: conf;
+    padding: 12px 16px 12px 48px;
+    margin-bottom: 8px;
+    background: var(--gray-50);
+    border-radius: 6px;
+    position: relative;
+    font-size: 14px;
+  }
+  .confounder-list li::before {
+    content: counter(conf);
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    width: 22px;
+    height: 22px;
+    background: var(--gray-300);
+    color: var(--gray-700);
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Conclusion boxes */
+  .conclusion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  .conclusion-box {
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+  }
+  .conclusion-box.shows {
+    background: var(--green-100);
+    border: 1px solid #86efac;
+  }
+  .conclusion-box.not-shows {
+    background: var(--red-100);
+    border: 1px solid #fca5a5;
+  }
+  .conclusion-box h4 {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .conclusion-box ul {
+    padding-left: 18px;
+    margin: 0;
+  }
+  .conclusion-box li { margin-bottom: 6px; }
+
+  .needed-box {
+    background: var(--blue-50);
+    border: 1px solid var(--blue-500);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+  .needed-box h4 { margin-bottom: 10px; }
+  .needed-box ul { padding-left: 18px; }
+  .needed-box li { margin-bottom: 6px; }
+
+  /* Footer */
+  .report-footer {
+    border-top: 1px solid var(--gray-200);
+    padding: 24px 0;
+    margin-top: 48px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+  .report-footer span { margin: 0 12px; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--gray-600);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-swatch {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  /* Print */
+  @media print {
+    .report-header { padding: 24px 0; }
+    .section { page-break-inside: avoid; }
+    .chart-container { page-break-inside: avoid; }
+    body { font-size: 12px; }
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .comparison-grid, .conclusion-grid { grid-template-columns: 1fr; }
+    .toc ol { columns: 1; }
+    .timeline-row { grid-template-columns: 100px 1fr 1fr; }
+    .report-header h1 { font-size: 20px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="report-header">
+  <div class="container">
+    <h1>Firebase first_open vs Google Play Downloads</h1>
+    <div class="subtitle">Selective Optimization Analysis &mdash; Prosoma Living Well Plus &mdash; Android App Campaigns</div>
+    <div class="meta-info">
+      <span>March 9, 2026</span>
+      <span class="confidential-badge">INTERNAL ONLY &mdash; NOT FOR EXTERNAL DISTRIBUTION</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- TABLE OF CONTENTS -->
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#executive-summary">Executive Summary</a></li>
+    <li><a href="#campaign-setup">Campaign Setup</a></li>
+    <li><a href="#timeline">Timeline of Changes</a></li>
+    <li><a href="#raw-data">Raw Data &mdash; Monthly Performance</a></li>
+    <li><a href="#same-campaign">Analysis &mdash; Same Campaign, Different Settings</a></li>
+    <li><a href="#seasonality">Seasonality Control (Location #2 as Baseline)</a></li>
+    <li><a href="#gap-analysis">Gap Analysis &mdash; Relative Performance</a></li>
+    <li><a href="#confounders">Confounding Factors</a></li>
+    <li><a href="#spend-allocation">Spend Allocation Over Time</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ol>
+</nav>
+
+<!-- SECTION 1: EXECUTIVE SUMMARY -->
+<section class="section" id="executive-summary">
+  <h2>1. Executive Summary</h2>
+  <ul class="findings-list">
+    <li><strong>Optimization setting changed multiple times.</strong> Location #1's selective optimization was changed multiple times: Google Play (Jul&ndash;Aug 2025) &rarr; Firebase (Oct&ndash;Dec 2025) &rarr; Google Play again (Feb&ndash;Mar 2026). Location #2 has always been Firebase-only, creating a natural experiment.</li>
+    <li><strong>TK contract loss is the dominant external factor.</strong> The contract with TK (Techniker Krankenkasse) &mdash; one of Germany's largest health insurers &mdash; ended in December 2025. From January 2026, TK-insured patients can no longer register or activate vouchers. This dramatically reduced the eligible patient pool and is likely the primary driver of the registration&rarr;voucher rate drop (15&ndash;16% &rarr; 9&ndash;10%), not seasonality or optimization settings.</li>
+    <li><strong>Small signal, overwhelmed by confounders.</strong> After controlling for the TK contract loss and seasonality, the gap between campaigns is ~5 percentage points wider when Location #1 uses Google Play vs when both use Firebase &mdash; but sample sizes are small and the TK eligibility change makes before/after comparisons fundamentally unreliable.</li>
+  </ul>
+</section>
+
+<!-- SECTION 2: CAMPAIGN SETUP -->
+<section class="section" id="campaign-setup">
+  <h2>2. Campaign Setup</h2>
+
+  <h3>Campaign Configuration</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Location #1</th>
+          <th>Location #2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Campaign ID</strong></td><td>22078894455</td><td>22670088920</td></tr>
+        <tr><td><strong>Geo targeting</strong></td><td>5 states (BW, Bavaria, Hessen, Lower Saxony, NRW)</td><td>Germany minus those 5 states</td></tr>
+        <tr><td><strong>Budget/day</strong></td><td class="num">3,700 PLN</td><td class="num">4,800 PLN</td></tr>
+        <tr><td><strong>tCPA</strong></td><td class="num">1,050 PLN</td><td class="num">1,050 PLN</td></tr>
+        <tr><td><strong>Bidding</strong></td><td>TARGET_CPA</td><td>TARGET_CPA</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Account-Level Conversion Action Settings</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Conversion Action</th>
+          <th>Type</th>
+          <th>primary_for_goal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Google Play downloads</td>
+          <td>GOOGLE_PLAY_DOWNLOAD</td>
+          <td><span class="badge badge-secondary">false (secondary)</span></td>
+        </tr>
+        <tr>
+          <td>Firebase first_open</td>
+          <td>FIREBASE_ANDROID_FIRST_OPEN</td>
+          <td><span class="badge badge-primary">true (primary)</span></td>
+        </tr>
+        <tr>
+          <td>voucherActivated</td>
+          <td>FIREBASE_ANDROID_CUSTOM</td>
+          <td><span class="badge badge-primary">true (primary)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box">
+    <strong>Note on "primary_for_goal"</strong>
+    At the account level, Google Play downloads is marked as <em>secondary</em> (non-primary). However, individual campaigns can override this via selective optimization settings, promoting Google Play to primary for that campaign only.
+  </div>
+</section>
+
+<!-- SECTION 3: TIMELINE -->
+<section class="section" id="timeline">
+  <h2>3. Timeline of Changes</h2>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background: var(--blue-100);"></div> Google Play primary</div>
+    <div class="legend-item"><div class="legend-swatch" style="background: var(--orange-100);"></div> Firebase primary</div>
+    <div class="legend-item"><div class="legend-swatch" style="background: var(--gray-200);"></div> Transition</div>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-row">
+      <div class="timeline-header">Period</div>
+      <div class="timeline-header">Location #1</div>
+      <div class="timeline-header">Location #2</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Jul&ndash;Aug 2025</div>
+      <div class="timeline-cell tl-gp"><span class="badge badge-gp">Google Play</span> PRIMARY</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Sep 2025</div>
+      <div class="timeline-cell tl-transition"><span class="badge badge-transition">TRANSITION</span> switching to Firebase</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Oct&ndash;Dec 2025</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Jan 2026</div>
+      <div class="timeline-cell tl-transition"><span class="badge badge-transition">TRANSITION</span> switching to Google Play</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Feb&ndash;Mar 5, 2026</div>
+      <div class="timeline-cell tl-gp"><span class="badge badge-gp">Google Play</span> PRIMARY</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-cell timeline-month">Mar 6, 2026</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> changed back by team</div>
+      <div class="timeline-cell tl-fb"><span class="badge badge-fb">Firebase</span> PRIMARY</div>
+    </div>
+  </div>
+
+  <h3>Evidence: Google Play Downloads &mdash; PRIMARY Conversion Count (Location #1)</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="num">PRIMARY</th>
+          <th class="num">Total</th>
+          <th class="num">Ratio</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Jul 2025</td><td class="num">124</td><td class="num">124</td><td class="num">100%</td><td><span class="badge badge-gp">PRIMARY</span></td></tr>
+        <tr><td>Aug 2025</td><td class="num">775</td><td class="num">775</td><td class="num">100%</td><td><span class="badge badge-gp">PRIMARY</span></td></tr>
+        <tr class="transition-row"><td>Sep 2025</td><td class="num">924</td><td class="num">2,915</td><td class="num">32%</td><td><span class="badge badge-transition">TRANSITION</span></td></tr>
+        <tr><td>Oct 2025</td><td class="num">0</td><td class="num">4,324</td><td class="num">0%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr><td>Nov 2025</td><td class="num">0</td><td class="num">3,994</td><td class="num">0%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr><td>Dec 2025</td><td class="num">0</td><td class="num">2,868</td><td class="num">0%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr class="transition-row"><td>Jan 2026</td><td class="num">2,551</td><td class="num">5,808</td><td class="num">44%</td><td><span class="badge badge-transition">TRANSITION</span></td></tr>
+        <tr><td>Feb 2026</td><td class="num">4,686</td><td class="num">4,686</td><td class="num">100%</td><td><span class="badge badge-gp">PRIMARY</span></td></tr>
+        <tr><td>Mar 2026*</td><td class="num">750</td><td class="num">753</td><td class="num">100%</td><td><span class="badge badge-gp">PRIMARY</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Evidence: Firebase first_open &mdash; PRIMARY Conversion Count (Location #1)</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="num">PRIMARY</th>
+          <th class="num">Total</th>
+          <th class="num">Ratio</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Jul 2025</td><td class="num">0</td><td class="num">110</td><td class="num">0%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr><td>Aug 2025</td><td class="num">3</td><td class="num">515</td><td class="num">1%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr class="transition-row"><td>Sep 2025</td><td class="num">1,542</td><td class="num">2,169</td><td class="num">71%</td><td><span class="badge badge-transition">TRANSITION</span></td></tr>
+        <tr><td>Oct 2025</td><td class="num">3,156</td><td class="num">3,156</td><td class="num">100%</td><td><span class="badge badge-fb">PRIMARY</span></td></tr>
+        <tr><td>Nov 2025</td><td class="num">2,896</td><td class="num">2,896</td><td class="num">100%</td><td><span class="badge badge-fb">PRIMARY</span></td></tr>
+        <tr><td>Dec 2025</td><td class="num">2,124</td><td class="num">2,124</td><td class="num">100%</td><td><span class="badge badge-fb">PRIMARY</span></td></tr>
+        <tr class="transition-row"><td>Jan 2026</td><td class="num">2,235</td><td class="num">4,150</td><td class="num">54%</td><td><span class="badge badge-transition">TRANSITION</span></td></tr>
+        <tr><td>Feb 2026</td><td class="num">1</td><td class="num">3,403</td><td class="num">0%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+        <tr><td>Mar 2026*</td><td class="num">13</td><td class="num">564</td><td class="num">2%</td><td><span class="badge badge-secondary">SECONDARY</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box">
+    <strong>Location #2 &mdash; No changes</strong>
+    Firebase first_open: ALWAYS 100% PRIMARY (never changed). Google Play downloads: ALWAYS 0% PRIMARY (always secondary).
+  </div>
+</section>
+
+<!-- SECTION 4: RAW DATA -->
+<section class="section" id="raw-data">
+  <h2>4. Raw Data &mdash; Monthly Performance</h2>
+
+  <h3>Location #1 (Campaign 22078894455)</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Phase</th>
+          <th class="num">Spend (PLN)</th>
+          <th class="num">GP Installs</th>
+          <th class="num">FB First Open</th>
+          <th class="num">Registered</th>
+          <th class="num">Voucher</th>
+          <th class="num">CPA/Voucher</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Jul 2025</td><td><span class="badge badge-gp">GP</span></td>
+          <td class="num">3,042</td><td class="num">124</td><td class="num">110</td><td class="num">20</td><td class="num">5</td><td class="num">608</td>
+        </tr>
+        <tr>
+          <td>Aug 2025</td><td><span class="badge badge-gp">GP</span></td>
+          <td class="num">18,053</td><td class="num">775</td><td class="num">515</td><td class="num">115</td><td class="num">17</td><td class="num">1,062</td>
+        </tr>
+        <tr class="transition-row">
+          <td>Sep 2025</td><td><span class="badge badge-transition">Trans.</span></td>
+          <td class="num">62,433</td><td class="num">2,915</td><td class="num">2,169</td><td class="num">536</td><td class="num">73</td><td class="num">855</td>
+        </tr>
+        <tr>
+          <td>Oct 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">73,902</td><td class="num">4,324</td><td class="num">3,156</td><td class="num">683</td><td class="num">107</td><td class="num">691</td>
+        </tr>
+        <tr>
+          <td>Nov 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">70,028</td><td class="num">3,994</td><td class="num">2,896</td><td class="num">690</td><td class="num">85</td><td class="num">824</td>
+        </tr>
+        <tr>
+          <td>Dec 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">60,564</td><td class="num">2,868</td><td class="num">2,124</td><td class="num">453</td><td class="num">73</td><td class="num">830</td>
+        </tr>
+        <tr class="transition-row">
+          <td>Jan 2026</td><td><span class="badge badge-transition">Trans.</span></td>
+          <td class="num">112,481</td><td class="num">5,808</td><td class="num">4,150</td><td class="num">916</td><td class="num">104</td><td class="num">1,082</td>
+        </tr>
+        <tr>
+          <td>Feb 2026</td><td><span class="badge badge-gp">GP</span></td>
+          <td class="num">86,080</td><td class="num">4,686</td><td class="num">3,403</td><td class="num">799</td><td class="num">67</td><td class="num">1,285</td>
+        </tr>
+        <tr>
+          <td>Mar 2026*</td><td><span class="badge badge-gp">GP</span></td>
+          <td class="num">13,116</td><td class="num">753</td><td class="num">564</td><td class="num">137</td><td class="num">7</td><td class="num">1,874</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px; color: var(--gray-500);">* Mar 2026 = partial month (Mar 1&ndash;5 only)</p>
+
+  <h3>Location #2 (Campaign 22670088920)</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Phase</th>
+          <th class="num">Spend (PLN)</th>
+          <th class="num">GP Installs</th>
+          <th class="num">FB First Open</th>
+          <th class="num">Registered</th>
+          <th class="num">Voucher</th>
+          <th class="num">CPA/Voucher</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Jul 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">24,842</td><td class="num">1,300</td><td class="num">1,024</td><td class="num">234</td><td class="num">46</td><td class="num">540</td>
+        </tr>
+        <tr>
+          <td>Aug 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">75,250</td><td class="num">3,530</td><td class="num">2,633</td><td class="num">625</td><td class="num">86</td><td class="num">875</td>
+        </tr>
+        <tr>
+          <td>Sep 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">111,697</td><td class="num">5,277</td><td class="num">4,106</td><td class="num">1,075</td><td class="num">143</td><td class="num">781</td>
+        </tr>
+        <tr>
+          <td>Oct 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">129,459</td><td class="num">7,237</td><td class="num">5,284</td><td class="num">1,155</td><td class="num">189</td><td class="num">685</td>
+        </tr>
+        <tr>
+          <td>Nov 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">133,771</td><td class="num">7,788</td><td class="num">5,503</td><td class="num">1,289</td><td class="num">200</td><td class="num">669</td>
+        </tr>
+        <tr>
+          <td>Dec 2025</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">90,774</td><td class="num">4,476</td><td class="num">3,359</td><td class="num">743</td><td class="num">114</td><td class="num">796</td>
+        </tr>
+        <tr>
+          <td>Jan 2026</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">60,877</td><td class="num">3,227</td><td class="num">2,342</td><td class="num">515</td><td class="num">45</td><td class="num">1,353</td>
+        </tr>
+        <tr>
+          <td>Feb 2026</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">76,106</td><td class="num">3,928</td><td class="num">3,049</td><td class="num">712</td><td class="num">68</td><td class="num">1,119</td>
+        </tr>
+        <tr>
+          <td>Mar 2026*</td><td><span class="badge badge-fb">FB</span></td>
+          <td class="num">10,843</td><td class="num">555</td><td class="num">412</td><td class="num">112</td><td class="num">13</td><td class="num">834</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px; color: var(--gray-500);">* Mar 2026 = partial month (Mar 1&ndash;5 only)</p>
+</section>
+
+<!-- SECTION 5: SAME CAMPAIGN, DIFFERENT SETTINGS -->
+<section class="section" id="same-campaign">
+  <h2>5. Analysis &mdash; Same Campaign, Different Settings (Location #1)</h2>
+  <p>This is the cleanest comparison available: same geo targeting, same campaign, different optimization settings over time. Transition months (Sep 2025, Jan 2026) are excluded.</p>
+
+  <div class="comparison-grid">
+    <div class="comparison-box firebase-box">
+      <h4><span class="badge badge-fb">Firebase Phase</span> Oct&ndash;Dec 2025</h4>
+      <div class="stat-row"><span class="stat-label">Spend</span><span class="stat-value">204,494 PLN</span></div>
+      <div class="stat-row"><span class="stat-label">GP Installs</span><span class="stat-value">11,186</span></div>
+      <div class="stat-row"><span class="stat-label">accountRegistered</span><span class="stat-value">1,826</span></div>
+      <div class="stat-row"><span class="stat-label">voucherActivated</span><span class="stat-value">265</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Registration</span><span class="stat-value">16.3%</span></div>
+      <div class="stat-row"><span class="stat-label">Registration&rarr;Voucher</span><span class="stat-value">14.5%</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Voucher</span><span class="stat-value">2.37%</span></div>
+      <div class="stat-row"><span class="stat-label">CPA / voucher</span><span class="stat-value">772 PLN</span></div>
+    </div>
+    <div class="comparison-box gp-box">
+      <h4><span class="badge badge-gp">Google Play Phase</span> Feb 2026</h4>
+      <div class="stat-row"><span class="stat-label">Spend</span><span class="stat-value">86,080 PLN</span></div>
+      <div class="stat-row"><span class="stat-label">GP Installs</span><span class="stat-value">4,686</span></div>
+      <div class="stat-row"><span class="stat-label">accountRegistered</span><span class="stat-value">799</span></div>
+      <div class="stat-row"><span class="stat-label">voucherActivated</span><span class="stat-value">67</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Registration</span><span class="stat-value">17.0%</span></div>
+      <div class="stat-row"><span class="stat-label">Registration&rarr;Voucher</span><span class="stat-value">8.4%</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Voucher</span><span class="stat-value">1.43%</span></div>
+      <div class="stat-row"><span class="stat-label">CPA / voucher</span><span class="stat-value">1,285 PLN</span></div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-title">Location #1 &mdash; Firebase Phase vs Google Play Phase</div>
+    <canvas id="chart-funnel-comparison"></canvas>
+  </div>
+
+  <div class="caveat-box">
+    <strong>Important Caveat</strong>
+    This comparison is confounded by seasonality (Q4 vs Q1), budget levels (204K over 3 months vs 86K in 1 month), and unequal time period lengths. The differences above cannot be attributed solely to the optimization setting.
+  </div>
+</section>
+
+<!-- SECTION 6: SEASONALITY CONTROL -->
+<section class="section" id="seasonality">
+  <h2>6. Seasonality Control (Location #2 as Baseline)</h2>
+  <p>Location #2 never changed its optimization setting &mdash; it has always used Firebase first_open. If the decline in conversion rates is seasonal, Location #2 should show the same pattern.</p>
+
+  <div class="comparison-grid">
+    <div class="comparison-box firebase-box">
+      <h4>Location #2 &mdash; Oct&ndash;Dec 2025</h4>
+      <div class="stat-row"><span class="stat-label">Spend</span><span class="stat-value">354,004 PLN</span></div>
+      <div class="stat-row"><span class="stat-label">GP Installs</span><span class="stat-value">19,501</span></div>
+      <div class="stat-row"><span class="stat-label">accountRegistered</span><span class="stat-value">3,187</span></div>
+      <div class="stat-row"><span class="stat-label">voucherActivated</span><span class="stat-value">503</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Registration</span><span class="stat-value">16.3%</span></div>
+      <div class="stat-row"><span class="stat-label">Registration&rarr;Voucher</span><span class="stat-value">15.8%</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Voucher</span><span class="stat-value">2.58%</span></div>
+      <div class="stat-row"><span class="stat-label">CPA / voucher</span><span class="stat-value">706 PLN</span></div>
+    </div>
+    <div class="comparison-box gp-box">
+      <h4>Location #2 &mdash; Feb 2026</h4>
+      <div class="stat-row"><span class="stat-label">Spend</span><span class="stat-value">76,106 PLN</span></div>
+      <div class="stat-row"><span class="stat-label">GP Installs</span><span class="stat-value">3,928</span></div>
+      <div class="stat-row"><span class="stat-label">accountRegistered</span><span class="stat-value">712</span></div>
+      <div class="stat-row"><span class="stat-label">voucherActivated</span><span class="stat-value">68</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Registration</span><span class="stat-value">18.1%</span></div>
+      <div class="stat-row"><span class="stat-label">Registration&rarr;Voucher</span><span class="stat-value">9.6%</span></div>
+      <div class="stat-row"><span class="stat-label">Install&rarr;Voucher</span><span class="stat-value">1.73%</span></div>
+      <div class="stat-row"><span class="stat-label">CPA / voucher</span><span class="stat-value">1,119 PLN</span></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Finding</strong>
+    Location #2 &mdash; which never changed its optimization setting &mdash; also dropped from 15.8% to 9.6% in registration&rarr;voucher rate. This decline is now largely explained by the <strong>TK contract termination</strong> (December 2025): TK-insured patients &mdash; a significant portion of the eligible pool &mdash; can no longer register or activate vouchers from January 2026. This eligibility reduction, not seasonality alone, accounts for most of the decline seen across both campaigns.
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-title">Registration &rarr; Voucher Rate Over Time (Both Campaigns)</div>
+    <canvas id="chart-reg-voucher-timeline"></canvas>
+  </div>
+</section>
+
+<!-- SECTION 7: GAP ANALYSIS -->
+<section class="section" id="gap-analysis">
+  <h2>7. Gap Analysis &mdash; Relative Performance</h2>
+  <p>The key question: does the optimization setting affect how Location #1 performs <em>relative</em> to Location #2?</p>
+
+  <h3>Registration &rarr; Voucher Rate</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>#1 Setup</th>
+          <th class="num">#1 Reg&rarr;Voucher</th>
+          <th class="num">#2 Reg&rarr;Voucher</th>
+          <th class="num">Relative Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Oct&ndash;Dec 2025</td>
+          <td><span class="badge badge-fb">Firebase</span></td>
+          <td class="num">14.5%</td>
+          <td class="num">15.8%</td>
+          <td class="num">#2 better by 9%</td>
+        </tr>
+        <tr>
+          <td>Feb 2026</td>
+          <td><span class="badge badge-gp">Google Play</span></td>
+          <td class="num">8.4%</td>
+          <td class="num">9.6%</td>
+          <td class="num">#2 better by 14%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>CPA per voucherActivated</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>#1 Setup</th>
+          <th class="num">#1 CPA/voucher</th>
+          <th class="num">#2 CPA/voucher</th>
+          <th class="num">Relative Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Oct&ndash;Dec 2025</td>
+          <td><span class="badge badge-fb">Firebase</span></td>
+          <td class="num">772 PLN</td>
+          <td class="num">706 PLN</td>
+          <td class="num">#2 cheaper by 9%</td>
+        </tr>
+        <tr>
+          <td>Feb 2026</td>
+          <td><span class="badge badge-gp">Google Play</span></td>
+          <td class="num">1,285 PLN</td>
+          <td class="num">1,119 PLN</td>
+          <td class="num">#2 cheaper by 13%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>When Location #1 used Google Play, the gap widened by ~5 percentage points compared to when both used Firebase. However, this is based on limited data points (67 vs 265 voucher activations in Location #1).</p>
+
+  <div class="chart-container">
+    <div class="chart-title">Relative Performance Gap &mdash; Location #1 vs Location #2</div>
+    <canvas id="chart-gap-analysis"></canvas>
+  </div>
+</section>
+
+<!-- SECTION 8: CONFOUNDERS -->
+<section class="section" id="confounders">
+  <h2>8. Confounding Factors</h2>
+  <p>The following factors make this analysis observational rather than conclusive. A causal claim cannot be made from this data.</p>
+
+  <ol class="confounder-list">
+    <li><strong>TK contract termination (December 2025).</strong> The contract with Techniker Krankenkasse (TK) &mdash; one of Germany's largest statutory health insurers &mdash; ended in December 2025. From January 2026, patients insured by TK can no longer register in the app or activate vouchers. This dramatically reduced the eligible patient pool and is likely the single largest factor driving the registration&rarr;voucher rate decline from ~15&ndash;16% to ~9&ndash;10%. Any before/after comparison spanning this date is fundamentally compromised by this eligibility change.</li>
+    <li><strong>Different geographies.</strong> Location #1 targets 5 "high-converting" German states, Location #2 targets the rest. These populations may respond differently to campaigns regardless of optimization setting.</li>
+    <li><strong>Seasonality.</strong> Q4 (Oct&ndash;Dec) may show better conversion rates than Q1 (Jan&ndash;Feb), though the TK contract loss makes it difficult to separate true seasonal effects from the eligibility reduction.</li>
+    <li><strong>Budget reallocation.</strong> In Jan 2026, budget shifted dramatically: Location #1 went from ~61K to 112K PLN/month while Location #2 dropped from ~91K to 61K. Higher spend can cause diminishing returns and inflate CPAs.</li>
+    <li><strong>Sample sizes.</strong> voucherActivated counts are small (67&ndash;265 per period). Observed differences of 5&ndash;6 percentage points may not be statistically significant.</li>
+    <li><strong>Multiple simultaneous changes.</strong> The optimization setting change in Jan 2026 coincided with the budget shift AND the TK contract loss, making it impossible to isolate the effect of any single variable.</li>
+    <li><strong>Unequal time periods.</strong> The Firebase phase spans 3 clean months (Oct&ndash;Dec 2025), while the Google Play phase has only 1 clean month (Feb 2026). Jul&ndash;Aug 2025 was a ramp-up period with very low spend.</li>
+    <li><strong>No true control.</strong> A proper A/B test would change one variable while keeping everything else constant. That did not happen here &mdash; geography, budget, time period, TK eligibility, and optimization setting all differ between the comparison groups.</li>
+  </ol>
+</section>
+
+<!-- SECTION 9: SPEND ALLOCATION -->
+<section class="section" id="spend-allocation">
+  <h2>9. Spend Allocation Over Time</h2>
+
+  <div class="chart-container">
+    <div class="chart-title">Monthly Spend &mdash; Location #1 vs Location #2 (PLN)</div>
+    <canvas id="chart-spend"></canvas>
+  </div>
+
+  <div class="info-box">
+    <strong>Notable shift in January 2026</strong>
+    Location #1's spend nearly doubled (61K &rarr; 112K PLN) while Location #2's was cut (91K &rarr; 61K PLN). This budget reallocation coincided with the optimization setting change, making it impossible to attribute performance changes to either factor alone.
+  </div>
+</section>
+
+<!-- SECTION 10: CONCLUSION -->
+<section class="section" id="conclusion">
+  <h2>10. Conclusion</h2>
+
+  <div class="conclusion-grid">
+    <div class="conclusion-box shows">
+      <h4>What the data shows</h4>
+      <ul>
+        <li>Location #1's selective optimization was changed at least twice (Sep 2025 and Jan 2026), with transitions visible in the primary conversion ratio data.</li>
+        <li>Both campaigns show the same decline in registration&rarr;voucher rates from Q4 2025 to Q1 2026, regardless of the optimization setting.</li>
+        <li>The TK contract termination (Dec 2025) coincides exactly with the voucher rate drop, and is the most likely primary driver &mdash; it removed a significant portion of eligible patients from the market.</li>
+        <li>The performance gap between campaigns is smaller when both use Firebase (~9%) vs when #1 uses Google Play (~14%), but this signal is weak and confounded.</li>
+        <li>Google Play downloads is classified as secondary (non-primary) at the account level by default.</li>
+      </ul>
+    </div>
+    <div class="conclusion-box not-shows">
+      <h4>What the data does NOT show</h4>
+      <ul>
+        <li>Whether Firebase or Google Play optimization <em>causes</em> better outcomes (too many confounding variables, especially the TK contract loss).</li>
+        <li>Whether the previous "failed test" observation was actually a failure, a seasonal coincidence, or partially masked by TK eligibility changes.</li>
+        <li>What would happen if Location #1 switched to Firebase with current budget levels, geo targeting, and the reduced (post-TK) patient pool.</li>
+        <li>How much of the voucher rate decline is attributable to TK loss vs seasonality vs optimization settings &mdash; these effects cannot be separated with available data.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="needed-box">
+    <h4>What would be needed for a definitive answer</h4>
+    <ul>
+      <li><strong>A clean A/B test:</strong> same geo, same budget, same time period, only the optimization setting differs.</li>
+      <li><strong>Or a longitudinal comparison:</strong> Run Location #1 on Firebase for 2&ndash;3 months (the current change from Mar 6) and compare to the Feb 2026 baseline, controlling for Location #2's trend as a seasonality proxy. <strong>Crucially</strong>, this comparison must account for the post-TK patient pool being permanently smaller than pre-TK &mdash; absolute voucher numbers from before Dec 2025 are not directly comparable to after.</li>
+      <li><strong>TK-adjusted baseline:</strong> If data is available on what share of voucher activations came from TK-insured patients, this could be used to normalize pre/post comparisons and isolate the optimization setting effect.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="report-footer">
+  <span>Analysis based on Google Ads API data (GAQL)</span>
+  <span>|</span>
+  <span>Generated: March 9, 2026</span>
+  <span>|</span>
+  <span>Prosoma DACH Marketing</span>
+</footer>
+
+<!-- CHARTS -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  const months = ['Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26*'];
+
+  // Color constants
+  const BLUE = '#2563eb';
+  const BLUE_LIGHT = 'rgba(37,99,235,0.15)';
+  const ORANGE = '#ea580c';
+  const ORANGE_LIGHT = 'rgba(234,88,12,0.15)';
+  const GRAY = '#9ca3af';
+  const GREEN = '#16a34a';
+  const RED = '#dc2626';
+
+  // Background band plugin for phase coloring
+  const phaseBandsPlugin = {
+    id: 'phaseBands',
+    beforeDraw(chart) {
+      if (!chart.options.plugins.phaseBands) return;
+      const { ctx, chartArea: {left, right, top, bottom}, scales: {x} } = chart;
+      const bands = chart.options.plugins.phaseBands.bands;
+      if (!bands) return;
+
+      bands.forEach(band => {
+        const x1 = x.getPixelForValue(band.from) - (x.getPixelForValue(1) - x.getPixelForValue(0)) / 2;
+        const x2 = x.getPixelForValue(band.to) + (x.getPixelForValue(1) - x.getPixelForValue(0)) / 2;
+        ctx.save();
+        ctx.fillStyle = band.color;
+        ctx.fillRect(Math.max(x1, left), top, Math.min(x2, right) - Math.max(x1, left), bottom - top);
+        ctx.restore();
+      });
+    }
+  };
+  Chart.register(phaseBandsPlugin);
+
+  // Phase bands for Location #1
+  const loc1Bands = [
+    { from: 0, to: 1, color: BLUE_LIGHT },      // Jul-Aug: GP
+    { from: 2, to: 2, color: 'rgba(156,163,175,0.15)' }, // Sep: transition
+    { from: 3, to: 5, color: ORANGE_LIGHT },     // Oct-Dec: Firebase
+    { from: 6, to: 6, color: 'rgba(156,163,175,0.15)' }, // Jan: transition
+    { from: 7, to: 8, color: BLUE_LIGHT },       // Feb-Mar: GP
+  ];
+
+  // ---- Chart 1: CPA per voucherActivated ----
+  const cpaLoc1 = [608, 1062, 855, 691, 824, 830, 1082, 1285, 1874];
+  const cpaLoc2 = [540, 875, 781, 685, 669, 796, 1353, 1119, 834];
+
+  new Chart(document.getElementById('chart-reg-voucher-timeline').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: 'Location #1',
+          data: [
+            +(20/5*100 > 0 ? (5/20*100).toFixed(1) : 0),   // Jul: 5/20 = 25.0
+            +(17/115*100).toFixed(1),  // Aug: 14.8
+            +(73/536*100).toFixed(1),  // Sep: 13.6
+            +(107/683*100).toFixed(1), // Oct: 15.7
+            +(85/690*100).toFixed(1),  // Nov: 12.3
+            +(73/453*100).toFixed(1),  // Dec: 16.1
+            +(104/916*100).toFixed(1), // Jan: 11.4
+            +(67/799*100).toFixed(1),  // Feb: 8.4
+            +(7/137*100).toFixed(1),   // Mar: 5.1
+          ],
+          borderColor: BLUE,
+          backgroundColor: BLUE,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+        },
+        {
+          label: 'Location #2',
+          data: [
+            +(46/234*100).toFixed(1),  // Jul: 19.7
+            +(86/625*100).toFixed(1),  // Aug: 13.8
+            +(143/1075*100).toFixed(1),// Sep: 13.3
+            +(189/1155*100).toFixed(1),// Oct: 16.4
+            +(200/1289*100).toFixed(1),// Nov: 15.5
+            +(114/743*100).toFixed(1), // Dec: 15.3
+            +(45/515*100).toFixed(1),  // Jan: 8.7
+            +(68/712*100).toFixed(1),  // Feb: 9.6
+            +(13/112*100).toFixed(1),  // Mar: 11.6
+          ],
+          borderColor: ORANGE,
+          backgroundColor: ORANGE,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.2,
+      plugins: {
+        phaseBands: { bands: loc1Bands },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%`,
+            afterBody: function(tooltipItems) {
+              const idx = tooltipItems[0].dataIndex;
+              const phases = ['Google Play', 'Google Play', 'Transition', 'Firebase', 'Firebase', 'Firebase', 'Transition', 'Google Play', 'Google Play'];
+              return `Location #1 phase: ${phases[idx]}`;
+            }
+          }
+        },
+        legend: { position: 'top' },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Registration → Voucher Rate (%)' },
+          beginAtZero: true,
+          ticks: { callback: v => v + '%' }
+        },
+        x: {
+          title: { display: true, text: 'Background color = Location #1 phase (blue=GP, orange=Firebase, gray=transition)' },
+        }
+      }
+    }
+  });
+
+  // ---- Chart 2: Funnel Comparison (Location #1 phases) ----
+  new Chart(document.getElementById('chart-funnel-comparison').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Install→Registration', 'Registration→Voucher', 'Install→Voucher'],
+      datasets: [
+        {
+          label: 'Firebase Phase (Oct–Dec 2025)',
+          data: [16.3, 14.5, 2.37],
+          backgroundColor: 'rgba(234,88,12,0.7)',
+          borderColor: ORANGE,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Google Play Phase (Feb 2026)',
+          data: [17.0, 8.4, 1.43],
+          backgroundColor: 'rgba(37,99,235,0.7)',
+          borderColor: BLUE,
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.2,
+      indexAxis: 'y',
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x}%`
+          }
+        },
+        legend: { position: 'top' },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Rate (%)' },
+          beginAtZero: true,
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+
+  // ---- Chart 3: Gap Analysis ----
+  new Chart(document.getElementById('chart-gap-analysis').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Reg→Voucher Gap', 'CPA/Voucher Gap'],
+      datasets: [
+        {
+          label: 'Firebase Phase (Oct–Dec 2025)',
+          data: [9, 9],
+          backgroundColor: 'rgba(234,88,12,0.7)',
+          borderColor: ORANGE,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Google Play Phase (Feb 2026)',
+          data: [14, 13],
+          backgroundColor: 'rgba(37,99,235,0.7)',
+          borderColor: BLUE,
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.2,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: #2 better by ${ctx.parsed.y}%`
+          }
+        },
+        legend: { position: 'top' },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Location #2 outperforms #1 by (%)' },
+          beginAtZero: true,
+          ticks: { callback: v => v + '%' },
+          max: 20,
+        }
+      }
+    }
+  });
+
+  // ---- Chart 4: Spend Allocation ----
+  const spendLoc1 = [3042, 18053, 62433, 73902, 70028, 60564, 112481, 86080, 13116];
+  const spendLoc2 = [24842, 75250, 111697, 129459, 133771, 90774, 60877, 76106, 10843];
+
+  new Chart(document.getElementById('chart-spend').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: 'Location #1',
+          data: spendLoc1,
+          backgroundColor: 'rgba(37,99,235,0.7)',
+          borderColor: BLUE,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Location #2',
+          data: spendLoc2,
+          backgroundColor: 'rgba(234,88,12,0.7)',
+          borderColor: ORANGE,
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.2,
+      plugins: {
+        phaseBands: { bands: loc1Bands },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} PLN`,
+            afterBody: function(tooltipItems) {
+              const idx = tooltipItems[0].dataIndex;
+              const phases = ['Google Play', 'Google Play', 'Transition', 'Firebase', 'Firebase', 'Firebase', 'Transition', 'Google Play', 'Google Play'];
+              return `Location #1 phase: ${phases[idx]}`;
+            }
+          }
+        },
+        legend: { position: 'top' },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Monthly Spend (PLN)' },
+          beginAtZero: true,
+          ticks: {
+            callback: v => (v / 1000).toFixed(0) + 'K'
+          }
+        },
+        x: {
+          title: { display: true, text: 'Background color = Location #1 phase (blue=GP, orange=Firebase, gray=transition)' },
+        }
+      }
+    }
+  });
+
+});
+</script>
+
+</body>
+</html>
