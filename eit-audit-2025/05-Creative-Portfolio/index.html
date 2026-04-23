@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>EIT Audit · index</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0a0a1a,#162447);color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login{text-align:center;padding:40px;max-width:440px;width:100%;background:rgba(255,255,255,0.04);border-radius:16px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08)}
+.brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px}
+.brand-mark{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1F4E79,#4DB6AC);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:22px}
+.brand-name{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+.brand-sub{font-size:11px;color:#4DB6AC;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.login h1{font-size:20px;margin-bottom:6px;color:#fff;font-weight:600}
+.login p{color:#94a3b8;font-size:13px;margin-bottom:24px;line-height:1.5}
+input{width:100%;padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:16px;outline:none;margin-bottom:14px;font-family:inherit}
+input:focus{border-color:#4DB6AC;background:rgba(255,255,255,0.08)}
+button{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#1F4E79,#4DB6AC);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+button:disabled{opacity:0.5;cursor:wait}
+.error{color:#f87171;font-size:13px;margin-top:10px;display:none}
+.spinner{display:none;margin:14px auto 0;width:24px;height:24px;border:3px solid rgba(255,255,255,0.1);border-top-color:#4DB6AC;border-radius:50%;animation:spin .8s linear infinite}
+.footer{margin-top:24px;font-size:11px;color:#64748b}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head><body>
+<div class="login" id="loginPanel" style="display:none">
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div>
+      <div class="brand-name">prosoma</div>
+      <div class="brand-sub">Digital Healthcare</div>
+    </div>
+  </div>
+  <h1>EIT Audit Evidence 2025</h1>
+  <p>DACH Marketing 2025 - page: 05-Creative-Portfolio/index.html</p>
+  <input id="pw" type="password" placeholder="Enter access password" autocomplete="off"/>
+  <button id="btn" onclick="dec()">Unlock</button>
+  <div id="spin" class="spinner"></div>
+  <div id="err" class="error">Incorrect password. Try again.</div>
+  <div class="footer">Confidential | Authorized access only</div>
+</div>
+<div id="autoSpin" style="text-align:center;color:#94a3b8;font-size:14px">
+  <div class="spinner" style="display:block;margin:20px auto"></div>
+  <p>Loading...</p>
+</div>
+
+<script>
+const S="rm72WmM9ijVIIPK+iHY35w==";
+const I="xDvVBXVpdFqVHT50";
+const C="IRBeM9RkwCzGuvuWRTzmT9S9h/pG+0DLNxidcTCIt8lyXSgYIeSNFZtrBbC02SsbWzQ1WPZOEvo04TbQyS59r/Oka0VFHTUZIlhNDd0i0oWDLUSzywQEpguLZl9Iy4YhMCUHNKZBYTudwjCWTBtDiMSOkvkqm4JN5a1W2Jh+8rnOWInTZ52ErRVlM1f13kJEPYpngkCQj0iLVIF54CU0QFydpNDH2zgaPi1XwQHhaH36tVmFFviFVOyPEoGbxy3ApF32yJJgK3q96CD+C7uoBY9EhbJgiy8eyNifJN8uWgj4fcmw/HsI6MDmweNfTeZ0cKq/Qocdel8FDFqof71F7IzXIaO3cNWspxD9wIfWbQENOyq/kcsuEPvfZa54ONL521ma2avjm4Rj3UTPJIj1VIw8tbWS16z7BE/zYSKcu61fpZO3IoikHNxMgaSffSNLMEKHtEmydyXHMTHTmW2VdSVICOXIyYIemOFYM+DTBktIbI5sX2v0lVecz4TWrIUNLqgJkAHBtlnot0zmoBRo5U+EptK7wTfKOzHu6s+n3JH/gxCD+Moe3nIRRRNb7E8mZJH19luSOG99cHTfi72bZTMBkI0FB9+yTDColn34fzK9eiRbEensClIHl6AEqygOWu0bNmO+xLJzJEekqb6biVewwDUBEBhapnyEbfvhzqqdh1AAb5QOdhJWcGLYVH73w9ZRpw/vKM896l2PXs3er/a5FFKQ3nIS01zcg/gW5VIKYQXQ0EkJb99GnDsgmVBWD/Q946d7R752I26U010bxnU/VRsB3ao55yiEIGYxmA8ZlfhGDTLRc3wb8XhR1Dzsqvqv3stG0JW8B6nbibX3Oyf6I7lt7oOdYletAegqJJKd6KIv2XwJCnbZLGz5SF1hDZXgPjJsHqtUKIBEfWMTSAhmUZmYASKGkbmJNj51PPqeyDUxo0GVworEJfmfCrUb56i11KDQAGUzHMOg2nXzOW+/n7NDjl2/J5GgVHjanIijyR15y2NbIOBYkZ/qdFFZ3bINgJIpmkIaaCndhmR+kUFNiKCS0hBa2S64DOGKQMyqMi/s8WdlUF6WFG2L2yhEGKr2zswH/bS1KhzjqVO8GxgrRYdts3cDLZchPkvMWhYgHjYlV6TjzwybGPF0grSDrqDgZd6dKi/NkUCGzy0NvT2dXUipEnCuAa8RlixFU9kKW8zoYGH6k272uu94ThCn3r8K0eZ0J0FR/KpdEunGPGaw+ArayY6jWRgqg0KrRRB0FujgkmGUieYY8mhDY6vcw2D4CYT2OYm33xYaN2qhrl+En5Ep9/s8iynHBRY8dzAXATyaVaf3tJyQZzHgkTWPd7w7Z+XZcQN070HZFXz/Wygtbj124SdqpiIt2P1331d0wTpzeYNoL5XkMSZI1LlgrvlSrzegpg+A5oT4gqPdHgaUAlDohYy3ivahjs4O+ajUPc8mYN07/a9NFusr6QerxZJDvgDGcyO89jCaDL8InYpQEPvlh7jJuwMuhuHfxh/5k8rTs1Fqd7Iiic2EU6PTj6brzq6aAKXyftnOpYK1DXsDyFfLdivF/8eOOOG+7ZrxpfsgZAXe8ZxQBO/idhabvhX+Lu1CM3itRctHICDTZtfS3QxlU+O3kLgk4RMWf/syjkYAjde5zDhLISygsjuF7ePYn5pBnUHquFPa+pvROSxTbP03JyQSnyxc5bPAkL+I8Zulcx+DDHLGQYn+7biWt0AzJNcNQI6AThUcZnLUjZx1Spbl6rUiTX9rcPBruj2qkP/MG+L00GgtPWt/y+MYZTs+v7y+c/saiePDoYi8ou6yVlHLuncfexj0lczYHdFbNveBu6X+PGTGdjn4G5g8xNXyfAvsDymrCS7INCDSZuMKpggfH9yOAD+72ZK//m4gy9TSuPqYNgSzWLSfe398Du6s00YAwQBdF9bchwuapNwK9MfiU1PyJWcy58szR/RqttZma5jsHFUAwRALIqgAWCSmBqOzeXLd5LctBF10ixJ7wuYczPuzpRqA5h3OjlYCbEqH5Mhzo9v+UZ03PLv9AyRwrnZQ08m5HbhvKJgTj/7CBq7DxuaNZRX1OkcKBdvU9sQjtBjhVWC9RU8l4mbvonL7asFEODCm8e+mFJvh47zn0LFrZ7vsOFZj8VJIOSl90ltAvn7k5hWOsi5isWJWW6HaxsIWWacPbJOBYPShIGAH8pnoyeKSlCvNf+0/RdQvzqtFBAcE65CVnbpNmrKHpcTJ0ksvHmZ89vuLYEE99K5VMxFDl5zRjZJr+hfBEuRfcwcghUkGyC9q+uVzrw0Nn/4UDRkibiA+zFJFPb2A/Uieyl4olYqAoJ1vTnwMezOBcGgwGLrau2reQpZaLxBPgVUJGvmhtslTG4EHSEMtex9F6M1VisVvXrjFFiDPhEoPCZhcjMm68OOD1X031eOg1AyNx1m0IIhc433+3uiV3RMIEfRt4RAAeZoNJL3f5kpKblk7FgRs/GC5lssBBTY63HleQ6h+yq/0X6K7LtKWOv4YRProJM8xwVwGZrY1aBwkLjko4y4FTkBh1NwSYPZDTCozk6PoIxYaf/rkfYqwV5QaKJDfrCkXJRP5+XQeXl6v7KSP5QxR9PGuDSOi1d/kdnjJObsIVYl9UyAcSB34a3Nfj+WncN3yNsecTXKIFgonz0u3FHESxc2D7LUkKzRIKYkS3SkM9WGkQkLk4bir7/Hs98TELH3f18+SRWGEXR2q/IwQoTkudBjSHZHlecyRgq6YBdrg6f2Hc556WXVFA2B3JttZZFldcRik4rpPzaNTE+TRxmt7e91ERhOEFq2IWtq1dOD1n3HYYXkH+YcBAHzC/UAZEGGTY3mqjSwGEoqu4miO1AccJkvoce0KKuAYP+VmBibjV5zzWSBPM6k7JtSoU5qZDZhPdzX05jIX3cFjVYeUA7vYkfMp36LWe4JIsyDhv32343DUsF86CateAUnf6oa2fqHc5BrDSNcTm+ZzgUv6dmw08ioccEywz4vGpFIS1A+TOE9YdeW9kW38fLpDK2rI5i1iOh1i9LXmV4ocoGu8aPddmug6L3zMQFhtzF80XHttLSH2kFwTqoud+K8BM+bd2oylW6a8KBHdsz3HREOOt1iMFyWPRmSR+c67SlRzLP+vI5UmST35x+xXDXGi97OWZgidHHY4lGbzKevELge1k10xzTiXjGMJQwimUaKI7zUPKzI3uitug1JG9F1k+s200eb9oiSWw5reJ4uKRpDyWZmZ9IR0jW5nPl7QUnKTtBSbtdhg6Ul8nTahvXAAqTzzKY/5ud+kOjLNZcjjoKFD7yB1DqdEsur3mLdk4a7rd0zX2vr5Vwe9UEGwv8oSJ8BjUWjiXiJEXJafrz8Vk7+kjTD9IxdLY6ZD1Oxt9wpwswuk1sq9P7MvXwWIi4pQyMizbkIwkW2rDK8p2WPprYuJXOwWOJJ3hGwtfG4gjgy0EB+ew2aqklpEK1ekjeh9JMEXpKzS+MAi+R2zwgeYOJ5aU9WsE+7IlnQNeRF5b7yS16ErIg7MqBsK6z0tKpu7OwbTe/m65bt+3EPu0ue4egxm6xV+++14H2AQ+QgAYrfZLWKhpLjdYFNjUbxrNaiiv0JIqOKCEjFbmFwte8q9k+aYlkyNnkNigdZTBVeGMJ71aphUPWKj6+V+pcy8RDI9YKcXMm/4EOwPqYkklIq815mPTW6zoSyJu7DoY9lQv1AlREZ4U83LZUZwqO/UNGwu1IGfw4Ok0q9JvQ2fjTnLpfhd/AqlhsVhsCKiG9JbtsD/R/HHO4c5FGQpMFTKXvlJoeBvqH5jEs1OgyQ2YXj5t5/3NT0tUD8LwZm2AnN1Yu9gbPyh9SPZ6sbAvwQu2I/oEu0y+s2ca2CYGx4gTW7eWDtf0+CLJ6ZlNKT2qCWfxjEW+FZeudiEWIlEshWuX7n/cInuK482hlL2+PmcjrdG6nZIhXoerosB1ItltxKmXNUAt6gJDURAJ5ij95t8WawwdI2n50aw2Ym74M5f/QZd53/LJVavMY0RMgcPMDToLBgcfdlKn5Yd4AMYZFNqCfdgUeLsNHe/T5MrDE76RKMqA7dZMwXckEFWHLl1VBN8nDOVC+Xi6jeCYHmBZwhesWrtcOu+ReoLFPCsxXgh42s9h8YEyJU+M5HN59SkiXV4x36ckYVMEVpiBm/+f2mQkrqjwOFV9D2VOVjhMGhNsNFWU5tmEU5jylHxIARyjqxPWV4905sZyFzz/gI+gamnegjbj4Af0K8W+7S25Hk7AOfZSNXbt31ed9hY23eIAEmfoUXNjmP/0Hv4lN2enKloS+9C3MGKLN8WgiHY88+rL3cvjpNeT0RSnXkmg6GDGxV0xEC59jXyXYTCBOnf2HTfp00/z40vOb49Dym9jd4A1Z8ctqR3z0tvBHbSInQY4nBWTFgSyKQob0TCXpO1teEjeWRdcyBE+2kg5A9H+qSpC0MKu9GXn4Jb6ztcS0hNiZkZL4Mpm/yVaCKFMIiFOGJHZJfI1/0iCqDgPGV3cvJCvu0M52l565wgdYwm4mm5O8Al8fn3NOJZ3qtzu9KaHysjJ2gaF+/c31W45ZdEnGppBYMB6dvaKnVCZ6A4UUGt/5+o0VSQ1BFNe6A2w90pfYarh+sKqwp58fcosV+bOPLdv33KN1KygfCHGRnbEDohj8ywSqmM6pWGzA9KciyUu3EpjUfsR3j8OWbJpKkBNWIkl3rnOdqUlNwEEgHpenYzTc0A2ONgrrkXG6UuXnYZ/mcvfTOaV9kDdXNr/wsiwlvf8n7wJpBnIBnhYIEW6s52xg01W6F75beXW7Kcw5uLqTzOP1wJvqbrGRXSLgOtHA25knWtezZZ+LwfsDY/TrfxZ4KenYMQ4zGYUeekyY/znv/bxmtqWv2M339sugkg+t4RIIZyuanVrz4FOZ8KkSQ4dM53+wj3kUX4zz7RpHefQhkon3AVIvmCzF0tAJpxeJm86Ia2NA9wKl0doncq7NwP2LhYXjP2b9hLAywL6oi6NiKwjsFpI7dgpZ1d/UxAQ3XIARj9TSVVqmZ/HpiummlI1xbLkjBKRRgtBwPf+kx78OxuYDwFuB6yBW1AarWLpCLusY8d10FPg1bfWbTyYOgeAkJE27m+OWFZOkwk2m2+Umut7onD1gzOxuvcPaKIj671tzhFflmgWizixfekSvlRfOSIYfrcVZFRSnSzZQVdqo+QHGlqn5FipjA04I2bUW0VBBLPQ9jpZDYTzYZU+Jnxmr43kbvH8A/v69GkqOK7pVAai7gC+YdKQcGjv5Jc2Mojiydbj4+s";
+
+async function decryptWith(p){
+  const enc=new TextEncoder();
+  const salt=Uint8Array.from(atob(S),c=>c.charCodeAt(0));
+  const iv=Uint8Array.from(atob(I),c=>c.charCodeAt(0));
+  const ct=Uint8Array.from(atob(C),c=>c.charCodeAt(0));
+  const km=await crypto.subtle.importKey("raw",enc.encode(p),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:salt,iterations:100000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const dec=await crypto.subtle.decrypt({name:"AES-GCM",iv:iv},key,ct);
+  return new TextDecoder("utf-8").decode(dec);
+}
+
+async function dec(){
+  document.getElementById("err").style.display="none";
+  document.getElementById("btn").disabled=true;
+  document.getElementById("spin").style.display="block";
+  try{
+    const p=document.getElementById("pw").value;
+    const html=await decryptWith(p);
+    sessionStorage.setItem("eitPwd", p);
+    document.open();document.write(html);document.close();
+  }catch(e){
+    document.getElementById("spin").style.display="none";
+    document.getElementById("btn").disabled=false;
+    document.getElementById("err").style.display="block";
+    document.getElementById("pw").focus();
+  }
+}
+
+(async()=>{
+  const stored=sessionStorage.getItem("eitPwd");
+  if(stored){
+    try{
+      const html=await decryptWith(stored);
+      document.open();document.write(html);document.close();
+      return;
+    }catch(e){
+      sessionStorage.removeItem("eitPwd");
+    }
+  }
+  document.getElementById("autoSpin").style.display="none";
+  document.getElementById("loginPanel").style.display="block";
+  document.getElementById("pw").focus();
+})();
+
+document.addEventListener("keypress", e => {
+  if(e.key === "Enter" && document.activeElement && document.activeElement.id === "pw") dec();
+});
+</script>
+</body></html>
